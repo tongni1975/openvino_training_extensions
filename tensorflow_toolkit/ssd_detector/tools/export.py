@@ -17,7 +17,6 @@
 from __future__ import print_function
 import argparse
 import os
-import subprocess
 
 import tensorflow as tf
 from tfutils.helpers import dump_frozen_graph, load_module, execute_mo
@@ -28,6 +27,7 @@ def parse_args():
   parser = argparse.ArgumentParser(description='Export model in IE format')
   parser.add_argument('--model_name', default='vlp')
   parser.add_argument('--data_type', default='FP32', choices=['FP32', 'FP16'], help='Data type of IR')
+  parser.add_argument('--output_dir', default=None, help='Output Directory')
   parser.add_argument('--checkpoint', default=None, help='Default: latest')
   parser.add_argument('path_to_config', help='Path to a config.py')
   return parser.parse_args()
@@ -88,7 +88,7 @@ def main(_):
     raise FileNotFoundError(str(checkpoint))
 
   step = checkpoint.split('-')[-1]
-  output_dir = os.path.join(config.MODEL_DIR, 'export_{}'.format(step))
+  output_dir = args.output_dir if args.output_dir else os.path.join(config.MODEL_DIR, 'export_{}'.format(step))
 
   # Freezing graph
   frozen_dir = os.path.join(output_dir, 'frozen_graph')
@@ -107,6 +107,7 @@ def main(_):
     'scale': scale,
     'mean_value': mean_value,
     'tensorflow_use_custom_operations_config': ssd_config_path,
+    'data_type':args.data_type,
   }
   execute_mo(mo_params, frozen_graph, export_dir)
 
